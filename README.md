@@ -23,7 +23,7 @@ KVM-Router is a lightweight, web-based router management tool designed for VPS/L
 1. Clone the repository:
    ```bash
    git clone https://github.com/katy-the-kat/KVM-Router
-   cd KVM-router/service
+   cd KVM-Router/service
    ```
 
 2. Install dependencies:
