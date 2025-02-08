@@ -10,6 +10,11 @@
 #
 # Also you may connect the VPS to an exitnode to allow yourself to access local stuff like your own router or stuff
 # Without throwing tailscale
+#
+# By default routeros is on port 443
+#
+# Login:
+# admin:password
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
@@ -157,4 +162,4 @@ def logout():
     return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9443, ssl_context=('cert.pem', 'cert.key'), debug=True)
+    app.run(host='0.0.0.0', port=443, ssl_context=('cert.pem', 'cert.key'), debug=True)
