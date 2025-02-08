@@ -1,6 +1,6 @@
 # KVM-Router
 
-KVM-Router is a lightweight, web-based router management tool designed for VPS environments. With features like port forwarding, Tailscale integration (Not via UI), and the ability to function as a Tailscale exit node, it provides flexibility and control over your network.
+KVM-Router is a lightweight, web-based router management tool designed for VPS/Locked-Down environments. With features like port forwarding, Tailscale integration (Not via UI), and the ability to function as a Tailscale exit node, it provides flexibility and control over your network.
 
 ## Features
 
