@@ -13,7 +13,7 @@ KVM-Router is a lightweight, web-based router management tool designed for VPS e
 
 ### Requirements
 
-- Python 3.x
+- Python 3.x (Python 3.10 Recommended)
 - Flask
 - OpenSSL (to generate SSL certificates)
 - socat (to port forward)
@@ -38,7 +38,7 @@ KVM-Router is a lightweight, web-based router management tool designed for VPS e
 
 4. Run the application:
    ```bash
-   python app.py
+   python3 app.py
    ```
 
 5. Access the application in your browser at `https://<your-server-ip>` (default port: 443).
