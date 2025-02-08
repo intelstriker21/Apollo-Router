@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KVM-Router - Port Dashboard</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: black;
+            color: white;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #000000;
+            padding: 20px;
+            height: 100vh;
+        }
+        .sidebar h2 {
+            margin-bottom: 20px;
+        }
+        .sidebar a {
+            display: block;
+            text-decoration: none;
+            color: white;
+            background-color: black;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            text-align: left;
+            border-radius: 5px;
+        }
+        .sidebar a:hover {
+            background-color: #222;
+        }
+        .content {
+            flex: 1;
+            padding: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        ul li {
+            background: #111;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>KVM-Router</h2>
+        <a href="/info_dashboard">Info Dashboard</a>
+        <a href="/add_port">Add Port</a>
+        <a href="/remove_port">Remove Port</a>
+    </div>
+    <div class="content">
+        <h2>Active Ports</h2>
+        <ul>
+            {% for port in ports %}
+                <li>{{ port }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
