@@ -1,3 +1,16 @@
+# Make sure to get a self-signed ssl cert.
+#
+# Run this command!
+# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout cert.key -out cert.pem
+#
+# It will make the Selfsigned cert
+# 
+# RouterOS is good when merged with a VPS and tailscale, heck you can even use the server thats hosting routerOS as a tailscale exit node
+# Which makes it a router.
+#
+# Also you may connect the VPS to an exitnode to allow yourself to access local stuff like your own router or stuff
+# Without throwing tailscale
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 import secrets
@@ -7,9 +20,9 @@ app.secret_key = secrets.token_hex(32)
 
 PORTS_FILE = 'ports.txt'
 
-USERNAME = 'admin'
-PASSWORD = 'password'
-ROUTER_IP = 'Lol'  # Put Router IP
+USERNAME = 'admin' # Default Username
+PASSWORD = 'password' # Default Password
+ROUTER_IP = '0.0.0.0'  # Put Router IP
 MODEL = 'M1'  # Put Router Model
 RAM = '1GB'  # Put Router RAM Size
 CPU = 'Intel Atom'  # Put Router CPU
