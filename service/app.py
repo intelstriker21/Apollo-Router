@@ -161,5 +161,12 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+def start_all_ports():
+    for line in read_ports():
+        if line.strip():
+            router_port, target_port, ip = line.split(',')
+            os.system(f"socat TCP-LISTEN:{router_port},fork,reuseaddr TCP:{ip}:{target_port} &")
+
 if __name__ == '__main__':
+    start_all_ports()
     app.run(host='0.0.0.0', port=443, ssl_context=('cert.pem', 'cert.key'), debug=True)
