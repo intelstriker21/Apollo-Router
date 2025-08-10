@@ -46,19 +46,7 @@ Apollo-Router is a lightweight, web-based router management tool designed for VP
 ## Default Login Credentials
 
 - Username: `admin`
-- Password: `password`
-
-## Configuration
-
-- Edit the following variables in `main.py` to match your setup:
-  ```python
-  ROUTER_IP = '0.0.0.0'  # Router IP
-  MODEL = 'M1'           # Router Model
-  RAM = '1GB'            # Router RAM Size
-  CPU = 'Intel Atom'     # Router CPU
-  USERNAME = 'admin'     # Default Username, Please Change.
-  PASSWORD = 'password'  # Default Password, Please Change.
-  ```
+- Password: `admin`
 
 ## File Structure
 
