@@ -1,18 +1,27 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, render_template_string
+from flask_socketio import SocketIO, emit
+from scapy.all import sniff, IP, TCP, UDP
 import os
 import secrets
 import psutil
 import platform
 import re
+import threading
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(32)
+app.config['SECRET_KEY'] = secrets.token_hex(32)
+socketio = SocketIO(app)
 PORTS_FILE = 'ports.txt'
 USERNAME = 'admin'  # Default Username
 PASSWORD = 'admin'  # Default Password
 ROUTER_IP = '0.0.0.0'  # Router IP
 MODEL = 'Apollo'  # Router Model
 FIRMWARE = '1.0-Beta'  # Firmware Version
+
+# Global flag for sniffing
+sniffing = False
+sniff_thread = None
 
 # Fetch RAM dynamically with real installed RAM
 def get_ram_info():
@@ -27,7 +36,6 @@ def get_ram_info():
 # Fetch CPU dynamically
 def get_cpu_info():
     try:
-        # Try parsing /proc/cpuinfo for Linux-based systems (RouterOS compatible)
         with open('/proc/cpuinfo', 'r') as f:
             cpuinfo = f.read()
         match = re.search(r'model name\s*:\s*(.+)', cpuinfo)
@@ -65,22 +73,30 @@ def read_ports():
 def format_ports(ports):
     return [f"{p.split(',')[2]}:{p.split(',')[1]} <- Router -> {ROUTER_IP}:{p.split(',')[0]}" for p in ports]
 
-@app.route('/remove_port', methods=['GET', 'POST'])
-def remove_port_page():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    if request.method == 'POST':
-        router_port = request.form['port']
-        ports = [p.split(',')[0] for p in read_ports()]
-        if router_port in ports:
-            if remove_port(router_port):
-                flash(f"Router Port {router_port} removed successfully!", 'success')
-                return redirect(url_for('dashboard'))
-            else:
-                flash(f"Failed to remove Router Port {router_port}", 'danger')
+# Packet sniffing function
+def packet_callback(packet):
+    if sniffing and (IP in packet):
+        packet_info = {
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3],
+            'src': packet[IP].src,
+            'dst': packet[IP].dst,
+            'protocol': packet[IP].proto,
+            'length': len(packet),
+            'info': ''
+        }
+        if packet[IP].proto == 6 and TCP in packet:  # TCP
+            packet_info['protocol'] = 'TCP'
+            packet_info['info'] = f'{packet[TCP].sport} -> {packet[TCP].dport}'
+        elif packet[IP].proto == 17 and UDP in packet:  # UDP
+            packet_info['protocol'] = 'UDP'
+            packet_info['info'] = f'{packet[UDP].sport} -> {packet[UDP].dport}'
         else:
-            flash(f"Router Port {router_port} not found", 'danger')
-    return render_template('remove_port.html')
+            packet_info['protocol'] = packet[IP].proto
+        socketio.emit('packet', packet_info)
+
+def sniff_packets():
+    while sniffing:
+        sniff(prn=packet_callback, store=0, count=1, timeout=1)
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -94,21 +110,12 @@ def login():
             flash('Invalid credentials', 'danger')
     return render_template('login.html')
 
-@app.route('/reset_password', methods=['GET', 'POST'])
-def reset_password():
+@app.route('/dashboard', methods=['GET', 'POST'])
+def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    if request.method == 'POST':
-        new_password = request.form['new_password']
-        confirm_password = request.form['confirm_password']
-        if new_password and new_password == confirm_password:
-            global PASSWORD
-            PASSWORD = new_password
-            flash('Password reset successfully!', 'success')
-            return redirect(url_for('dashboard'))
-        else:
-            flash('Passwords do not match. Try again.', 'danger')
-    return render_template('reset_password.html')
+    ports = format_ports(read_ports())[::-1]
+    return render_template('dashboard.html', ports=ports, ip=ROUTER_IP, ports_count=len(ports), model=MODEL, firmware=FIRMWARE, cpu=CPU, memory=RAM)
 
 @app.route('/add_port', methods=['GET', 'POST'])
 def add_port_page():
@@ -128,6 +135,66 @@ def add_port_page():
             flash("Invalid port numbers or IP", 'danger')
     return render_template('add_port.html')
 
+@app.route('/remove_port', methods=['GET', 'POST'])
+def remove_port_page():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        router_port = request.form['port']
+        ports = [p.split(',')[0] for p in read_ports()]
+        if router_port in ports:
+            if remove_port(router_port):
+                flash(f"Router Port {router_port} removed successfully!", 'success')
+                return redirect(url_for('dashboard'))
+            else:
+                flash(f"Failed to remove Router Port {router_port}", 'danger')
+        else:
+            flash(f"Router Port {router_port} not found", 'danger')
+    return render_template('remove_port.html')
+
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        new_password = request.form['new_password']
+        confirm_password = request.form['confirm_password']
+        if new_password and new_password == confirm_password:
+            global PASSWORD
+            PASSWORD = new_password
+            flash('Password reset successfully!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Passwords do not match. Try again.', 'danger')
+    return render_template('reset_password.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/traffic')
+def traffic():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return render_template('traffic.html')
+
+@socketio.on('start_sniffing')
+def start_sniffing():
+    global sniffing, sniff_thread
+    if not sniffing:
+        sniffing = True
+        sniff_thread = threading.Thread(target=sniff_packets)
+        sniff_thread.daemon = True
+        sniff_thread.start()
+        emit('sniffing_status', {'sniffing': True})
+
+@socketio.on('stop_sniffing')
+def stop_sniffing():
+    global sniffing
+    sniffing = False
+    emit('sniffing_status', {'sniffing': False})
+
 def remove_port(router_port):
     try:
         os.system(f"pkill -f 'socat TCP-LISTEN:{router_port}'")
@@ -139,18 +206,6 @@ def remove_port(router_port):
     except Exception:
         return False
 
-@app.route('/dashboard', methods=['GET', 'POST'])
-def dashboard():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    ports = format_ports(read_ports())[::-1]
-    return render_template('dashboard.html', ports=ports, ip=ROUTER_IP, ports_count=len(ports), model=MODEL, firmware=FIRMWARE, cpu=CPU, memory=RAM)
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
-
 def start_all_ports():
     for line in read_ports():
         if line.strip():
@@ -159,4 +214,4 @@ def start_all_ports():
 
 if __name__ == '__main__':
     start_all_ports()
-    app.run(host='0.0.0.0', port=443, ssl_context=('cert.pem', 'cert.key'), debug=True)
+    socketio.run(app, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'cert.key'), debug=True)
