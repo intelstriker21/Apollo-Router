@@ -1,6 +1,6 @@
-# KVM-Router
+# Apollo-Router BETA
 
-KVM-Router is a lightweight, web-based router management tool designed for VPS/Locked-Down environments. With features like port forwarding, Tailscale integration (Not via UI), and the ability to function as a Tailscale exit node, it provides flexibility and control over your network.
+Apollo-Router is a lightweight, web-based router management tool designed for VPS/Locked-Down environments. With features like port forwarding, Tailscale integration (Not via UI), and the ability to function as a Tailscale exit node, it provides flexibility and control over your network.
 
 ## Features
 
@@ -109,5 +109,5 @@ Feel free to submit pull requests or issues to improve KVM-Router. Contributions
 
 ## Acknowledgments
 
-- Created by `discord.gg/dell`.
+- Created by `intelstrikerv3`.
 - Powered by Flask and Socat.
