@@ -1,36 +1,37 @@
-# Make sure to get a self-signed ssl cert.
-#
-# Run this command!
-# openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout cert.key -out cert.pem
-#
-# It will make the Selfsigned cert
-# 
-# RouterOS is good when merged with a VPS and tailscale, heck you can even use the server thats hosting routerOS as a tailscale exit node
-# Which makes it a router.
-#
-# Also you may connect the VPS to an exitnode to allow yourself to access local stuff like your own router or stuff
-# Without throwing tailscale
-#
-# By default routeros is on port 443
-#
-# Login:
-# admin:password
-
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 import secrets
+import psutil
+import platform
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
-
 PORTS_FILE = 'ports.txt'
+USERNAME = 'admin'  # Default Username
+PASSWORD = 'admin'  # Default Password
+ROUTER_IP = '0.0.0.0'  # Router IP
+MODEL = 'Apollo'  # Router Model
+FIRMWARE = '1.0-Beta'  # Firmware Version
 
-USERNAME = 'admin' # Default Username
-PASSWORD = 'password' # Default Password
-ROUTER_IP = '0.0.0.0'  # Put Router IP
-MODEL = 'M1'  # Put Router Model
-RAM = '1GB'  # Put Router RAM Size
-CPU = 'Intel Atom'  # Put Router CPU
+# Fetch RAM dynamically
+def get_ram_info():
+    try:
+        total_memory = psutil.virtual_memory().total
+        total_memory_gb = total_memory / (1024 ** 3)  # Convert bytes to GB
+        return f"{total_memory_gb:.2f}GB"
+    except Exception:
+        return '1GB'  # Fallback value
+
+# Fetch CPU dynamically
+def get_cpu_info():
+    try:
+        cpu_info = platform.processor() or psutil.cpu_info()[0].model_name
+        return cpu_info if cpu_info else 'Intel Atom'  # Fallback value
+    except Exception:
+        return 'Intel Atom'  # Fallback value
+
+RAM = get_ram_info()  # Dynamically fetch RAM
+CPU = get_cpu_info()  # Dynamically fetch CPU
 
 if not os.path.exists(PORTS_FILE):
     with open(PORTS_FILE, 'w') as f:
@@ -56,7 +57,6 @@ def format_ports(ports):
 def remove_port_page():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-
     if request.method == 'POST':
         router_port = request.form['port']
         ports = [p.split(',')[0] for p in read_ports()]
@@ -68,7 +68,6 @@ def remove_port_page():
                 flash(f"Failed to remove Router Port {router_port}", 'danger')
         else:
             flash(f"Router Port {router_port} not found", 'danger')
-
     return render_template('remove_port.html')
 
 @app.route('/', methods=['GET', 'POST'])
@@ -87,11 +86,9 @@ def login():
 def reset_password():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-
     if request.method == 'POST':
         new_password = request.form['new_password']
         confirm_password = request.form['confirm_password']
-
         if new_password and new_password == confirm_password:
             global PASSWORD
             PASSWORD = new_password
@@ -99,20 +96,18 @@ def reset_password():
             return redirect(url_for('info_dashboard'))
         else:
             flash('Passwords do not match. Try again.', 'danger')
-
     return render_template('reset_password.html')
 
 @app.route('/info_dashboard')
 def info_dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-
     ports = read_ports()
     return render_template('info_dashboard.html',
                            ports_count=len(ports),
                            ip=ROUTER_IP,
                            model=MODEL,
-                           firmware="1.0-RELEASE",
+                           firmware=FIRMWARE,
                            cpu=CPU,
                            memory=RAM)
 
@@ -120,7 +115,6 @@ def info_dashboard():
 def add_port_page():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-
     if request.method == 'POST':
         router_port = request.form['router_port']
         target_port = request.form['target_port']
@@ -133,7 +127,6 @@ def add_port_page():
                 flash(f"Failed to add port {router_port} -> {ip}:{target_port}", 'danger')
         else:
             flash("Invalid port numbers or IP", 'danger')
-
     return render_template('add_port.html')
 
 def remove_port(router_port):
@@ -143,7 +136,6 @@ def remove_port(router_port):
         ports = [p for p in ports if not p.startswith(router_port)]
         with open(PORTS_FILE, 'w') as f:
             f.writelines(f"{p}\n" for p in ports)
-
         return True
     except Exception:
         return False
@@ -152,7 +144,6 @@ def remove_port(router_port):
 def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-
     ports = format_ports(read_ports())[::-1]
     return render_template('dashboard.html', ports=ports)
 
