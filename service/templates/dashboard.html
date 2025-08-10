@@ -3,68 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KVM-Router - Port Dashboard</title>
+    <title>APOLLO-Router - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;600&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: black;
-            color: white;
+            font-family: 'Orbitron', sans-serif;
+            background: radial-gradient(circle at center, #0a0a2a 0%, #000015 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
+            overflow-x: hidden;
             display: flex;
         }
         .sidebar {
-            width: 250px;
-            background-color: #000000;
-            padding: 20px;
-            height: 100vh;
-        }
-        .sidebar h2 {
-            margin-bottom: 20px;
+            width: 280px;
+            background: rgba(10, 15, 30, 0.95);
+            padding: 25px 0;
+            position: fixed;
+            height: 100%;
+            box-shadow: 2px 0 10px rgba(100, 116, 255, 0.2);
+            z-index: 10;
+            backdrop-filter: blur(5px);
         }
         .sidebar a {
             display: block;
+            color: #a3bffa;
+            padding: 14px 25px;
             text-decoration: none;
-            color: white;
-            background-color: black;
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            text-align: left;
-            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         .sidebar a:hover {
-            background-color: #222;
+            color: #d1d5ff;
+            background: rgba(79, 70, 229, 0.2);
+        }
+        .sidebar a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #6474ff, transparent);
+            transition: 0.5s;
+        }
+        .sidebar a:hover::before {
+            left: 100%;
         }
         .content {
-            flex: 1;
-            padding: 20px;
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 30px;
         }
-        ul {
+        .header {
+            background: rgba(10, 15, 30, 0.9);
+            width: 100%;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(100, 116, 255, 0.1);
+            margin-bottom: 30px;
+        }
+        .header h2 {
+            margin: 0;
+            font-size: 24px;
+            color: #d1d5ff;
+            text-shadow: 0 0 10px rgba(100, 116, 255, 0.5);
+        }
+        .dashboard-card {
+            background: rgba(10, 15, 30, 0.9);
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 0 25px rgba(100, 116, 255, 0.2);
+            backdrop-filter: blur(8px);
+            animation: pulsarGlow 3s ease-in-out infinite;
+        }
+        @keyframes pulsarGlow {
+            0% { box-shadow: 0 0 20px rgba(100, 116, 255, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(100, 116, 255, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(100, 116, 255, 0.3); }
+        }
+        .stats {
+            margin: 15px 0;
+            color: #a3bffa;
+            font-family: 'Exo 2', sans-serif;
+        }
+        .port-list {
             list-style-type: none;
             padding: 0;
         }
-        ul li {
-            background: #111;
-            padding: 10px;
+        .port-list li {
+            background: rgba(17, 17, 17, 0.8);
+            padding: 12px 15px;
             margin-bottom: 10px;
-            border-radius: 5px;
+            border-radius: 8px;
             box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .port-list li:hover {
+            background: rgba(79, 70, 229, 0.2);
+            transform: translateY(-2px);
+        }
+        .nebula-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(100, 116, 255, 0.2) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: pulse 12s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.15; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.05); }
+            100% { opacity: 0.15; transform: translate(-50%, -50%) scale(1); }
+        }
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 220px;
+            }
+            .content {
+                margin-left: 220px;
+                width: calc(100% - 220px);
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+            .header h2 {
+                font-size: 20px;
+            }
+        }
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 15px 0;
+            }
+            .content {
+                margin-left: 0;
+                width: 100%;
+            }
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .dashboard-card {
+                padding: 20px;
+            }
+            .port-list li {
+                padding: 10px;
+            }
         }
     </style>
 </head>
-<body>
+<body class="relative">
+    <div class="nebula-glow"></div>
+    <canvas id="starField" class="fixed top-0 left-0 w-full h-full z-0"></canvas>
     <div class="sidebar">
-        <h2>KVM-Router</h2>
-        <a href="/info_dashboard">Info Dashboard</a>
         <a href="/add_port">Add Port</a>
         <a href="/remove_port">Remove Port</a>
+        <a href="/reset_password">Reset Password</a>
     </div>
     <div class="content">
-        <h2>Active Ports</h2>
-        <ul>
-            {% for port in ports %}
-                <li>{{ port }}</li>
-            {% endfor %}
-        </ul>
+        <div class="header">
+            <h2>APOLLO-Router</h2>
+        </div>
+        <div class="dashboard-card">
+            <h2>Welcome to your APOLLO-Router</h2>
+            <div class="stats">
+                <p><strong>Status:</strong> Online</p>
+                <p><strong>IP:</strong> {{ ip }}</p>
+                <p><strong>Number of Ports Active:</strong> {{ ports_count }}</p>
+                <p><strong>Model:</strong> {{ model }}</p>
+                <p><strong>Firmware Version:</strong> {{ firmware }}</p>
+                <p><strong>CPU:</strong> {{ cpu }}</p>
+                <p><strong>Memory:</strong> {{ memory }}</p>
+            </div>
+            <h2 class="mt-6">Active Ports</h2>
+            {% if ports|length == 0 %}
+                <p class="stats">There are no active ports</p>
+            {% else %}
+                <ul class="port-list">
+                    {% for port in ports %}
+                        <li>{{ port }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
     </div>
-</body>
-</html>
+    <script>
+        // Three.js Starfield with Optimized Performance
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('starField'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.position.z = 100;
+
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.6,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending
+        });
+        const stars = new Float32Array(3000 * 3);
+        for (let i = 0; i < 3000; i++) {
+            stars[i * 3] = (Math.random() - 0.5) * 1500;
+            stars[i * 3 + 1] = (Math.random() - 0.5) * 1500;
+            stars[i * 3 + 2] = (Math.random() - 0.5) * 1500;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(stars, 3));
+        const starField = new THREE.Points(starGeometry, starMaterial);
+        scene.add(starField);
+
+        // Add orbiting planets
+        const planetGeometry = new THREE.SphereGeometry(2, 32, 32);
+        const planetMaterial1 = new THREE.MeshBasicMaterial({ color: 0x4f46e5, transparent: true, opacity: 0.5 });
+        const planetMaterial2 = new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.5 });
+        const planet1 = new THREE.Mesh(planetGeometry, planetMaterial1);
+        const planet2 = new THREE.Mesh(planetGeometry, planetMaterial2);
+        scene.add(planet1, planet2);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now() * 0.0002;
+            starField.rotation.y = time * 0.1;
+            planet1.position.set(Math.cos(time) * 50, Math.sin(time) * 50, 0);
+            planet2.position.set(Math.cos(time + Math.PI) * 70, Math.sin(time + Math.PI) * 70, 0);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        // Optimized Parallax Effect with Debouncing
+        let lastX = 0;
+        let animationFrameId = null;
+        document.addEventListener('mousemove', (e) => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(() => {
+                const x = (e.clientX / window.innerWidth - 0.5) * 0.008;
+                if (Math.abs(x - lastX) < 0.003) return;
+                starField.rotation.y = x;
+                lastX = x;
+                animationFrameId = null;
+            });
+        });
+    </script>
