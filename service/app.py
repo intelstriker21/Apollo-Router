@@ -3,6 +3,7 @@ import os
 import secrets
 import psutil
 import platform
+import re
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(32)
@@ -12,23 +13,36 @@ PASSWORD = 'admin'  # Default Password
 ROUTER_IP = '0.0.0.0'  # Router IP
 MODEL = 'Apollo'  # Router Model
 FIRMWARE = '1.0-Beta'  # Firmware Version
+MEMORY = '3.83GB'  # Router Memory
 
-# Fetch RAM dynamically
+# Fetch RAM dynamically (unchanged from previous)
 def get_ram_info():
     try:
         total_memory = psutil.virtual_memory().total
         total_memory_gb = total_memory / (1024 ** 3)  # Convert bytes to GB
         return f"{total_memory_gb:.2f}GB"
     except Exception:
-        return '1GB'  # Fallback value
+        return '3.83GB'  # Fallback to provided value
 
 # Fetch CPU dynamically
 def get_cpu_info():
     try:
+        # Try parsing /proc/cpuinfo for Linux-based systems (RouterOS compatible)
+        with open('/proc/cpuinfo', 'r') as f:
+            cpuinfo = f.read()
+        # Extract model name using regex
+        match = re.search(r'model name\s*:\s*(.+)', cpuinfo)
+        if match:
+            cpu_name = match.group(1).strip()
+            # Clean up common redundant info (e.g., "Intel(R) Core(TM)")
+            cpu_name = re.sub(r'Intel\(R\)\s*Core\(TM\)\s*', '', cpu_name)
+            cpu_name = re.sub(r'\s*CPU\s*', '', cpu_name).strip()
+            return cpu_name if cpu_name else 'Unknown CPU'
+        # Fallback to psutil if /proc/cpuinfo doesn't provide model name
         cpu_info = platform.processor() or psutil.cpu_info()[0].model_name
-        return cpu_info if cpu_info else 'Intel Atom'  # Fallback value
+        return cpu_info if cpu_info else 'Unknown CPU'
     except Exception:
-        return 'Intel Atom'  # Fallback value
+        return 'Unknown CPU'  # Fallback value
 
 RAM = get_ram_info()  # Dynamically fetch RAM
 CPU = get_cpu_info()  # Dynamically fetch CPU
@@ -109,7 +123,7 @@ def info_dashboard():
                            model=MODEL,
                            firmware=FIRMWARE,
                            cpu=CPU,
-                           memory=RAM)
+                           memory=MEMORY)
 
 @app.route('/add_port', methods=['GET', 'POST'])
 def add_port_page():
