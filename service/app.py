@@ -13,16 +13,16 @@ PASSWORD = 'admin'  # Default Password
 ROUTER_IP = '0.0.0.0'  # Router IP
 MODEL = 'Apollo'  # Router Model
 FIRMWARE = '1.0-Beta'  # Firmware Version
-MEMORY = '3.83GB'  # Router Memory
 
-# Fetch RAM dynamically (unchanged from previous)
+# Fetch RAM dynamically with real installed RAM
 def get_ram_info():
     try:
         total_memory = psutil.virtual_memory().total
         total_memory_gb = total_memory / (1024 ** 3)  # Convert bytes to GB
         return f"{total_memory_gb:.2f}GB"
-    except Exception:
-        return '3.83GB'  # Fallback to provided value
+    except Exception as e:
+        print(f"Error fetching RAM: {e}")
+        return '3.83GB'  # Fallback value
 
 # Fetch CPU dynamically
 def get_cpu_info():
@@ -30,21 +30,19 @@ def get_cpu_info():
         # Try parsing /proc/cpuinfo for Linux-based systems (RouterOS compatible)
         with open('/proc/cpuinfo', 'r') as f:
             cpuinfo = f.read()
-        # Extract model name using regex
         match = re.search(r'model name\s*:\s*(.+)', cpuinfo)
         if match:
             cpu_name = match.group(1).strip()
-            # Clean up common redundant info (e.g., "Intel(R) Core(TM)")
             cpu_name = re.sub(r'Intel\(R\)\s*Core\(TM\)\s*', '', cpu_name)
             cpu_name = re.sub(r'\s*CPU\s*', '', cpu_name).strip()
             return cpu_name if cpu_name else 'Unknown CPU'
-        # Fallback to psutil if /proc/cpuinfo doesn't provide model name
         cpu_info = platform.processor() or psutil.cpu_info()[0].model_name
         return cpu_info if cpu_info else 'Unknown CPU'
-    except Exception:
-        return 'Unknown CPU'  # Fallback value
+    except Exception as e:
+        print(f"Error fetching CPU: {e}")
+        return 'Unknown CPU'
 
-RAM = get_ram_info()  # Dynamically fetch RAM
+RAM = get_ram_info()  # Dynamically fetch real RAM
 CPU = get_cpu_info()  # Dynamically fetch CPU
 
 if not os.path.exists(PORTS_FILE):
@@ -91,7 +89,7 @@ def login():
         password = request.form['password']
         if username == USERNAME and password == PASSWORD:
             session['logged_in'] = True
-            return redirect(url_for('info_dashboard'))
+            return redirect(url_for('dashboard'))
         else:
             flash('Invalid credentials', 'danger')
     return render_template('login.html')
@@ -107,23 +105,10 @@ def reset_password():
             global PASSWORD
             PASSWORD = new_password
             flash('Password reset successfully!', 'success')
-            return redirect(url_for('info_dashboard'))
+            return redirect(url_for('dashboard'))
         else:
             flash('Passwords do not match. Try again.', 'danger')
     return render_template('reset_password.html')
-
-@app.route('/info_dashboard')
-def info_dashboard():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    ports = read_ports()
-    return render_template('info_dashboard.html',
-                           ports_count=len(ports),
-                           ip=ROUTER_IP,
-                           model=MODEL,
-                           firmware=FIRMWARE,
-                           cpu=CPU,
-                           memory=MEMORY)
 
 @app.route('/add_port', methods=['GET', 'POST'])
 def add_port_page():
@@ -136,7 +121,7 @@ def add_port_page():
         if router_port.isdigit() and target_port.isdigit() and ip:
             if add_port(router_port, target_port, ip):
                 flash(f"Router Port {router_port} -> {ip}:{target_port} added successfully!", 'success')
-                return redirect(url_for('info_dashboard'))
+                return redirect(url_for('dashboard'))
             else:
                 flash(f"Failed to add port {router_port} -> {ip}:{target_port}", 'danger')
         else:
@@ -159,7 +144,7 @@ def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     ports = format_ports(read_ports())[::-1]
-    return render_template('dashboard.html', ports=ports)
+    return render_template('dashboard.html', ports=ports, ip=ROUTER_IP, ports_count=len(ports), model=MODEL, firmware=FIRMWARE, cpu=CPU, memory=RAM)
 
 @app.route('/logout')
 def logout():
