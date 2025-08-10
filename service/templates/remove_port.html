@@ -3,57 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KVM-Router - Remove Port</title>
+    <title>APOLLO-Router - Remove Port</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;600&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: black;
-            color: white;
+            font-family: 'Orbitron', sans-serif;
+            background: radial-gradient(circle at center, #0a0a2a 0%, #000015 100%);
+            color: #e0e7ff;
+            min-height: 100vh;
+            overflow-x: hidden;
             display: flex;
         }
         .sidebar {
-            width: 250px;
-            background-color: #000000;
-            padding: 20px;
-            height: 100vh;
+            width: 280px;
+            background: rgba(10, 15, 30, 0.95);
+            padding: 25px 0;
+            position: fixed;
+            height: 100%;
+            box-shadow: 2px 0 10px rgba(100, 116, 255, 0.2);
+            z-index: 10;
+            backdrop-filter: blur(5px);
         }
         .sidebar h2 {
             margin-bottom: 20px;
+            padding: 0 25px;
+            font-family: 'Orbitron', sans-serif;
         }
         .sidebar a {
             display: block;
+            color: #a3bffa;
+            padding: 14px 25px;
             text-decoration: none;
-            color: white;
-            background-color: black;
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            text-align: left;
-            border-radius: 5px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         .sidebar a:hover {
-            background-color: #222;
+            color: #d1d5ff;
+            background: rgba(79, 70, 229, 0.2);
+        }
+        .sidebar a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #6474ff, transparent);
+            transition: 0.5s;
+        }
+        .sidebar a:hover::before {
+            left: 100%;
         }
         .content {
-            flex: 1;
-            padding: 20px;
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .form-container {
+            background: rgba(10, 15, 30, 0.9);
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 0 25px rgba(100, 116, 255, 0.2);
+            backdrop-filter: blur(8px);
+            animation: pulsarGlow 3s ease-in-out infinite;
+        }
+        @keyframes pulsarGlow {
+            0% { box-shadow: 0 0 20px rgba(100, 116, 255, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(100, 116, 255, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(100, 116, 255, 0.3); }
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 16px;
+            color: #a3bffa;
+            margin-bottom: 5px;
+            font-family: 'Exo 2', sans-serif;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(20, 25, 50, 0.8);
+            border: 1px solid rgba(100, 116, 255, 0.3);
+            border-radius: 6px;
+            color: #e0e7ff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        input:focus {
+            outline: none;
+            border-color: #6474ff;
+            box-shadow: 0 0 10px rgba(100, 116, 255, 0.5);
+            background: rgba(25, 30, 60, 0.9);
+        }
+        button {
+            background: linear-gradient(45deg, #4f46e5, #a855f7);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        button:hover::before {
+            left: 100%;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.6);
+        }
+        .nebula-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(100, 116, 255, 0.2) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: pulse 12s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.15; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.05); }
+            100% { opacity: 0.15; transform: translate(-50%, -50%) scale(1); }
+        }
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 220px;
+            }
+            .content {
+                margin-left: 220px;
+                width: calc(100% - 220px);
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+            }
+        }
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                padding: 15px 0;
+            }
+            .content {
+                margin-left: 0;
+                width: 100%;
+                padding: 15px;
+            }
+            .form-container {
+                padding: 20px;
+            }
+            input {
+                padding: 8px;
+            }
+            button {
+                padding: 10px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
-<body>
+<body class="relative">
+    <div class="nebula-glow"></div>
+    <canvas id="starField" class="fixed top-0 left-0 w-full h-full z-0"></canvas>
     <div class="sidebar">
-        <h2>KVM-Router</h2>
-        <a href="/dashboard">Port Dashboard</a>
+        <h2>APOLLO-Router</h2>
+        <a href="/dashboard">Dashboard</a>
         <a href="/add_port">Add Port</a>
+        <a href="/reset_password">Reset Password</a>
     </div>
     <div class="content">
-        <h2>Remove Port</h2>
-        <form method="post">
-            <label for="router_port">Router Port:</label>
-            <input type="text" id="router_port" name="port" required>
-            <br><br>
-            <button type="submit">Remove Port</button>
-        </form>
+        <div class="form-container">
+            <h2>Remove Port</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-4 p-3 rounded-md {% if category == 'danger' %}bg-red-900{% else %}bg-indigo-900{% endif %} text-white text-sm font-['Exo_2']">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="post">
+                <div class="form-group">
+                    <label for="router_port">Router Port:</label>
+                    <input type="text" id="router_port" name="port" required>
+                </div>
+                <button type="submit">Remove Port</button>
+            </form>
+        </div>
     </div>
+    <script>
+        // Three.js Starfield with Optimized Performance
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('starField'), alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.position.z = 100;
+
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0xffffff,
+            size: 0.6,
+            transparent: true,
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending
+        });
+        const stars = new Float32Array(3000 * 3);
+        for (let i = 0; i < 3000; i++) {
+            stars[i * 3] = (Math.random() - 0.5) * 1500;
+            stars[i * 3 + 1] = (Math.random() - 0.5) * 1500;
+            stars[i * 3 + 2] = (Math.random() - 0.5) * 1500;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(stars, 3));
+        const starField = new THREE.Points(starGeometry, starMaterial);
+        scene.add(starField);
+
+        // Add orbiting planets
+        const planetGeometry = new THREE.SphereGeometry(2, 32, 32);
+        const planetMaterial1 = new THREE.MeshBasicMaterial({ color: 0x4f46e5, transparent: true, opacity: 0.5 });
+        const planetMaterial2 = new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.5 });
+        const planet1 = new THREE.Mesh(planetGeometry, planetMaterial1);
+        const planet2 = new THREE.Mesh(planetGeometry, planetMaterial2);
+        scene.add(planet1, planet2);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now() * 0.0002;
+            starField.rotation.y = time * 0.1;
+            planet1.position.set(Math.cos(time) * 50, Math.sin(time) * 50, 0);
+            planet2.position.set(Math.cos(time + Math.PI) * 70, Math.sin(time + Math.PI) * 70, 0);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        // Optimized Parallax Effect with Debouncing
+        let lastX = 0;
+        let animationFrameId = null;
+        document.addEventListener('mousemove', (e) => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = requestAnimationFrame(() => {
+                const x = (e.clientX / window.innerWidth - 0.5) * 0.008;
+                if (Math.abs(x - lastX) < 0.003) return;
+                starField.rotation.y = x;
+                lastX = x;
+                animationFrameId = null;
+            });
+        });
+    </script>
 </body>
 </html>
